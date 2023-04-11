@@ -1,24 +1,25 @@
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
+apiVersion: networking.k8s.io/v1                                                                                               
+kind: Ingress                                                                                                                  
+metadata:                                                                                                                      
   name: argocd-server
   namespace: argocd
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    #traefik.ingress.kubernetes.io/router.middlewares: default-redirect-https@kubernetescrd
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`argocd.${DOMAIN}`)
-      priority: 10
-      services:
-        - name: argocd-server
-          port: 80
-    - kind: Rule
-      match: Host(`argocd.${DOMAIN}`) && Headers(`Content-Type`, `application/grpc`)
-      priority: 11
-      services:
-        - name: argocd-server
-          port: 80
-          scheme: h2c
+  rules:
+  - host: argocd.int64.dev
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 80
   tls:
-    certResolver: default
+    - secretName: tls-argocd-int64dev
+      hosts:
+        - argocd.int64.dev
